@@ -93,9 +93,14 @@ func (m *urlListModel) AdapterForObject(ctx context.Context, op *directbase.Adap
 		return nil, err
 	}
 
+	typedID, ok := id.(*krm.NetworkSecurityURLListIdentity)
+	if !ok {
+		return nil, fmt.Errorf("id is not of type *krm.NetworkSecurityURLListIdentity")
+	}
+
 	return &urlList_Adapter{
 		gcpClient: gcpClient,
-		id:        id.(*krm.NetworkSecurityURLListIdentity),
+		id:        typedID,
 		desired:   desired,
 	}, nil
 }
