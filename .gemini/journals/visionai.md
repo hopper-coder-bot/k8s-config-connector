@@ -11,3 +11,11 @@
 - **Learning 1 (Mutable-but-unreadable EventDeliveryConfig)**: The Vision AI GCP API accepts `applicationConfigs.eventDeliveryConfig` on Create/Update requests, but does not return it in GET requests for undeployed applications. Handled this using the mutable-but-unreadable reconciliation pattern (matching `updateTime` and `observedGeneration` against status to prevent false diffs during re-reconciliation).
 - **Learning 2 (Empty JSON Handling in Struct_ToProto)**: `direct.Struct_ToProto` panicked on empty `apiextensionsv1.JSON{}` (when `.Raw` is empty or nil) during fuzzing. Added `len(in.Raw) == 0` check in `pkg/controller/direct/maputils.go`.
 - **Impact**: Verified full create/update/re-reconciliation/delete lifecycle against live GCP and captured audit logs proving real GCP execution.
+
+### [2026-10-17] VisionAIApplication MockGCP and Alignment Implementation
+- **Context**: Implemented MockGCP service and aligned HTTP golden logs for `VisionAIApplication` (Kind: `VisionAIApplication`).
+- **Learning 1 (MockGCP AppPlatform Service Registration)**: `cloud.google.com/go/visionai/apiv1/visionaipb` already contains standard protobuf descriptors and gRPC server interfaces (`pb.AppPlatformServer`). Implemented `mockvisionai` without needing additional custom proto generation in `mockgcp/Makefile`.
+- **Learning 2 (Stripping EventDeliveryConfig)**: Aligned MockGCP's `Application` creation/updating to omit `eventDeliveryConfig` under `applicationConfigs` upon storage, reflecting the live Vision AI API behavior where `eventDeliveryConfig` is mutable-but-unreadable for undeployed applications.
+- **Learning 3 (RuntimeInfo on Update)**: GCP Vision AI AppPlatform populates an empty `runtimeInfo: {}` object on updates, which was mirrored in `mockvisionai`'s `UpdateApplication`.
+- **Impact**: Both minimal and maximal E2E fixtures pass against MockGCP hermetically with zero diffs between mock and real HTTP logs.
+
